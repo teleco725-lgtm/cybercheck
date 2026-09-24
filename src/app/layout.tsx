@@ -19,7 +19,10 @@ export const metadata: Metadata = {
   keywords: ["CyberCheck", "auditoría IA", "ciberseguridad Chile", "NIST AI RMF", "ISO 42001", "Ley 19.628", "Ley 21.459", "shadow AI", "PyME"],
   authors: [{ name: "CyberCheck" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/favicon.svg",
   },
   openGraph: {
     title: "CyberCheck — Auditoría de IA",
