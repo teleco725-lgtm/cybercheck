@@ -14,6 +14,7 @@ import {
   FileText,
   Gavel,
   Flag,
+  Share2,
   ChevronRight,
   ArrowRight,
   Globe,
@@ -46,6 +47,7 @@ const ICONS = {
   FileText,
   Gavel,
   Flag,
+  Share2,
 } as const;
 
 type View = "home" | "menu";
