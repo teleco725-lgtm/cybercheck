@@ -243,7 +243,7 @@ export function ResultsDashboard({
                       startAngle={90}
                       endAngle={90 - (result.overallScore / 100) * 360}
                     >
-                      <PolarGrid type="number" domain={[0, 100]} tick={false} />
+                      <PolarGrid />
                       <RadialBar background dataKey="value" cornerRadius={10} />
                     </RadialBarChart>
                   </ResponsiveContainer>
