@@ -39,7 +39,7 @@ CyberCheck es un dashboard interactivo que ejecuta auditorías de IA contextuali
 | ISO 42001 | ISO/IEC 42001:2023 | 8 |
 | Shadow AI / AI Usage Audit | SANS + NIST CSF adaptado | 8 |
 
-### 🇨🇱 Nacional — Chile (5)
+### 🇨🇱 Nacional — Chile (8)
 
 | Auditoría | Marco | Controles |
 |-----------|-------|-----------|
@@ -48,8 +48,11 @@ CyberCheck es un dashboard interactivo que ejecuta auditorías de IA contextuali
 | Ley 21.459 + IA | Ley 21.459 (moderniza Ley 19.223) | 7 |
 | Marco IA Chile (placeholder) | Proyectos en tramitación | 6 |
 | Ley Redes Sociales + IA | Proyectos + DSA UE + Ley 27.675 AR | 12 |
+| Ley 21.663 + IA | Ley 21.663 Marco Nacional de Ciberseguridad (2024) | 12 |
+| Ley 21.713 + IA | Ley 21.713 + Ley 20.393 + UAF Chile | 11 |
+| SERNAC + E-commerce + IA | Ley 19.496 + Ley 21.398 + Reglamento E-commerce | 12 |
 
-**Total: 89 controles auditables** con severidad, descripción, evidencia esperada y recomendación base.
+**Total: 122 controles auditables** con severidad, descripción, evidencia esperada y recomendación base.
 
 ---
 

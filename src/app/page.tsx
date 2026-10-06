@@ -15,6 +15,9 @@ import {
   Gavel,
   Flag,
   Share2,
+  ShieldAlert,
+  Briefcase,
+  ShoppingCart,
   ChevronRight,
   ArrowRight,
   Globe,
@@ -48,6 +51,9 @@ const ICONS = {
   Gavel,
   Flag,
   Share2,
+  ShieldAlert,
+  Briefcase,
+  ShoppingCart,
 } as const;
 
 type View = "home" | "menu";
