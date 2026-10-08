@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
-import { ALL_AUDITS, SEVERITY_META, type Severity } from "@/lib/audits";
+import { ALL_AUDITS, SEVERITY_META, type Severity, type AttackScenario } from "@/lib/audits";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -34,6 +34,7 @@ interface AuditResult {
   distribution: { severity: Severity; status: string; count: number; count_status: number }[];
   quickWins: string[];
   criticalActions: string[];
+  attackScenarios: AttackScenario[];
 }
 
 const STATUS_SCORES: Record<AuditItemResult["status"], number> = {
@@ -103,7 +104,20 @@ Para CADA ítem del checklist, evalúa el estado basándote en las respuestas de
   ],
   "summary": "<párrafo de 4-6 frases resumiendo el estado general>",
   "quickWins": ["<3 acciones rápidas de implementar en 30 días>"],
-  "criticalActions": ["<3 acciones críticas de implementar en 7 días>"]
+  "criticalActions": ["<3 acciones críticas de implementar en 7 días>"],
+  "attackScenarios": [
+    {
+      "id": "atk-1",
+      "title": "<nombre corto del escenario, ej: 'Exfiltración de datos vía prompt injection'>",
+      "vector": "<cómo ejecuta el ataque el atacante, 1-2 frases concretas>",
+      "affectedAssets": ["<lista de activos comprometidos, ej: 'Base de datos de clientes', 'Credenciales internas'>"],
+      "prerequisites": "<qué necesita el atacante: acceso inicial, conocimiento, herramientas, etc.>",
+      "probability": "alta" | "media" | "baja",
+      "impact": "critico" | "alto" | "medio" | "bajo",
+      "mitigation": "<cómo mitigar este ataque específico>",
+      "linkedControls": ["<ids de controles no cumplidos que este ataque explota, ej: 'gov-1', 'sh-6'>"]
+    }
+  ]
 }
 
 REGLAS:
@@ -113,6 +127,14 @@ REGLAS:
 - Status "not_applicable": el control no aplica a esta organización (raro, solo cuando sea evidente).
 - Considera el tamaño de la organización: las PyMEs no requieren la madurez de una banca.
 - NO inventes detalles que no estén en las respuestas; sé específico y accionable.
+
+ESCENARIOS DE ATAQUE (attackScenarios):
+- Genera entre 3 y 5 escenarios de ataque concretos que un atacante podría ejecutar dada la combinación de controles no cumplidos.
+- Cada escenario debe explotar específicamente las brechas detectadas (vincular con linkedControls).
+- Probabilidad "alta" si los prerequisitos son triviales y la brecha es crítica.
+- Impacto "critico" si afecta datos sensibles, continuidad del negocio, o reputación gravemente.
+- Sé específico al contexto de la organización (sector, tamaño, datos que procesa).
+- Si no hay controles no cumplidos relevantes, devuelve array vacío.
 - Devuelve SOLO el JSON, sin markdown, sin explicaciones adicionales.`;
 
     let parsed: {
@@ -120,6 +142,7 @@ REGLAS:
       summary: string;
       quickWins: string[];
       criticalActions: string[];
+      attackScenarios: AttackScenario[];
     };
 
     try {
@@ -207,6 +230,7 @@ REGLAS:
       distribution,
       quickWins: parsed.quickWins || [],
       criticalActions: parsed.criticalActions || [],
+      attackScenarios: parsed.attackScenarios || [],
     };
 
     return NextResponse.json(result);
@@ -227,10 +251,25 @@ function generateFallback(
   summary: string;
   quickWins: string[];
   criticalActions: string[];
+  attackScenarios: AttackScenario[];
 } {
   const hasPolicy = Object.values(answers).some((v) =>
     typeof v === "string" && v.toLowerCase().includes("sí")
   );
+
+  // Generar escenarios de ataque genéricos basados en los controles críticos del audit
+  const criticalControls = audit.checklist.filter((c) => c.severity === "critico").slice(0, 3);
+  const fallbackScenarios: AttackScenario[] = criticalControls.map((ctrl, idx) => ({
+    id: `atk-${idx + 1}`,
+    title: `Explotación de ausencia de: ${ctrl.label}`,
+    vector: `Un atacante podría aprovechar la falta de "${ctrl.label.toLowerCase()}" para comprometer activos de la organización. Vector específico requiere revisión manual.`,
+    affectedAssets: ["Datos de clientes", "Sistemas internos", "Reputación de la organización"],
+    prerequisites: "Acceso inicial a sistemas externos o conocimiento de procesos internos.",
+    probability: "media",
+    impact: "alto",
+    mitigation: ctrl.recommendation,
+    linkedControls: [ctrl.id],
+  }));
 
   return {
     items: audit.checklist.map((c) => ({
@@ -251,5 +290,6 @@ function generateFallback(
       "Revisar acceso a datos personales por sistemas de IA",
       "Establecer un canal de reporte de incidentes de IA",
     ],
+    attackScenarios: fallbackScenarios,
   };
 }

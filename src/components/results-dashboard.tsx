@@ -15,6 +15,13 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Crosshair,
+  Flame,
+  Info,
+  Target,
+  Lock,
+  Zap,
+  ArrowRight,
 } from "lucide-react";
 import {
   PieChart,
@@ -72,6 +79,17 @@ export interface AuditResult {
   distribution: { severity: Severity; status: string; count: number; count_status: number }[];
   quickWins: string[];
   criticalActions: string[];
+  attackScenarios: {
+    id: string;
+    title: string;
+    vector: string;
+    affectedAssets: string[];
+    prerequisites: string;
+    probability: "alta" | "media" | "baja";
+    impact: "critico" | "alto" | "medio" | "bajo";
+    mitigation: string;
+    linkedControls: string[];
+  }[];
 }
 
 const STATUS_META: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
@@ -79,6 +97,19 @@ const STATUS_META: Record<string, { label: string; color: string; icon: typeof C
   partial: { label: "Parcial", color: "oklch(0.75 0.15 75)", icon: AlertCircle },
   non_compliant: { label: "No cumple", color: "oklch(0.60 0.22 25)", icon: XCircle },
   not_applicable: { label: "No aplica", color: "oklch(0.65 0.02 230)", icon: Shield },
+};
+
+const ATTACK_PROBABILITY_META: Record<string, { label: string; color: string; bg: string; border: string; icon: typeof Flame }> = {
+  alta: { label: "Probabilidad alta", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", icon: Flame },
+  media: { label: "Probabilidad media", color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200", icon: AlertTriangle },
+  baja: { label: "Probabilidad baja", color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200", icon: Info },
+};
+
+const ATTACK_IMPACT_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  critico: { label: "Impacto crítico", color: "text-red-800", bg: "bg-red-100", border: "border-red-300" },
+  alto: { label: "Impacto alto", color: "text-orange-800", bg: "bg-orange-100", border: "border-orange-300" },
+  medio: { label: "Impacto medio", color: "text-amber-800", bg: "bg-amber-100", border: "border-amber-300" },
+  bajo: { label: "Impacto bajo", color: "text-blue-800", bg: "bg-blue-100", border: "border-blue-300" },
 };
 
 const COMPLIANCE_LEVELS: Record<string, { color: string; bg: string; icon: typeof Shield }> = {
@@ -391,6 +422,118 @@ export function ResultsDashboard({
               </Card>
             </div>
           </div>
+
+          {/* Escenarios de Ataque Posibles */}
+          {result.attackScenarios && result.attackScenarios.length > 0 && (
+            <Card className="shadow-premium border-l-4 border-l-red-500 border-border overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30">
+                <CardTitle className="text-base flex items-center gap-2 text-red-800 dark:text-red-300">
+                  <Crosshair className="h-5 w-5" />
+                  Escenarios de Ataque Posibles
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  {result.attackScenarios.length} escenarios generados por IA basados en las brechas detectadas · vectores concretos que un atacante podría explotar
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                {result.attackScenarios.map((scenario, i) => {
+                  const prob = ATTACK_PROBABILITY_META[scenario.probability] || ATTACK_PROBABILITY_META.media;
+                  const imp = ATTACK_IMPACT_META[scenario.impact] || ATTACK_IMPACT_META.alto;
+                  const ProbIcon = prob.icon;
+                  return (
+                    <motion.div
+                      key={scenario.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(i * 0.05, 0.5) }}
+                      className="border border-border rounded-xl overflow-hidden bg-card hover:shadow-premium-hover transition-shadow"
+                    >
+                      {/* Header del escenario */}
+                      <div className="bg-muted/40 px-4 py-3 border-b border-border">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className="h-8 w-8 rounded-lg bg-red-100 dark:bg-red-950/50 flex items-center justify-center flex-shrink-0">
+                              <Target className="h-4 w-4 text-red-700 dark:text-red-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <span className="text-xs font-mono text-muted-foreground">{scenario.id}</span>
+                              </div>
+                              <h4 className="font-semibold text-sm leading-tight">{scenario.title}</h4>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1.5 items-end flex-shrink-0">
+                            <Badge variant="outline" className={`${prob.bg} ${prob.color} ${prob.border} border gap-1`}>
+                              <ProbIcon className="h-3 w-3" />
+                              {prob.label}
+                            </Badge>
+                            <Badge variant="outline" className={`${imp.bg} ${imp.color} ${imp.border} border`}>
+                              {imp.label}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Body del escenario */}
+                      <div className="px-4 py-3 space-y-2.5 text-xs">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                            <Zap className="h-3 w-3" />
+                            <span className="font-semibold uppercase tracking-wider text-[10px]">Vector de ataque</span>
+                          </div>
+                          <p className="text-foreground/85 leading-relaxed">{scenario.vector}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                            <Lock className="h-3 w-3" />
+                            <span className="font-semibold uppercase tracking-wider text-[10px]">Prerrequisitos del atacante</span>
+                          </div>
+                          <p className="text-foreground/85 leading-relaxed">{scenario.prerequisites}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                            <AlertCircle className="h-3 w-3" />
+                            <span className="font-semibold uppercase tracking-wider text-[10px]">Activos afectados</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {scenario.affectedAssets.map((asset, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-[10px] py-0.5">
+                                {asset}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">
+                            <Shield className="h-3 w-3" />
+                            <span className="font-semibold uppercase tracking-wider text-[10px]">Mitigación recomendada</span>
+                          </div>
+                          <p className="text-foreground/85 leading-relaxed">{scenario.mitigation}</p>
+                        </div>
+                        {scenario.linkedControls && scenario.linkedControls.length > 0 && (
+                          <div className="pt-2 border-t border-border">
+                            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                              <ArrowRight className="h-3 w-3" />
+                              <span className="font-semibold uppercase tracking-wider text-[10px]">Controles explotados</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {scenario.linkedControls.map((ctrlId) => {
+                                const item = result.items.find((it) => it.id === ctrlId);
+                                return (
+                                  <Badge key={ctrlId} variant="outline" className="text-[10px] py-0.5 font-mono bg-muted">
+                                    {ctrlId}{item ? ` · ${item.label.substring(0, 30)}${item.label.length > 30 ? "…" : ""}` : ""}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Detalle de controles */}
           <Card className="shadow-premium border-border">

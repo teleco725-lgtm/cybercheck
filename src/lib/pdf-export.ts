@@ -16,6 +16,15 @@ const TRANSLATIONS: Record<Lang, {
   summary: string;
   criticalActions: string;
   quickWins: string;
+  attackScenarios: string;
+  attackScenarioSubtitle: string;
+  attackVector: string;
+  attackPrereq: string;
+  attackAssets: string;
+  attackMitigation: string;
+  attackLinkedControls: string;
+  attackProbability: Record<string, string>;
+  attackImpact: Record<string, string>;
   controlsDetail: string;
   severity: string;
   status: string;
@@ -39,6 +48,15 @@ const TRANSLATIONS: Record<Lang, {
     summary: "Resumen ejecutivo",
     criticalActions: "Acciones críticas (7 días)",
     quickWins: "Quick wins (30 días)",
+    attackScenarios: "Escenarios de Ataque Posibles",
+    attackScenarioSubtitle: "Vectores concretos que un atacante podría explotar dadas las brechas detectadas",
+    attackVector: "Vector de ataque",
+    attackPrereq: "Prerrequisitos del atacante",
+    attackAssets: "Activos afectados",
+    attackMitigation: "Mitigación recomendada",
+    attackLinkedControls: "Controles explotados",
+    attackProbability: { alta: "Probabilidad alta", media: "Probabilidad media", baja: "Probabilidad baja" },
+    attackImpact: { critico: "Impacto crítico", alto: "Impacto alto", medio: "Impacto medio", bajo: "Impacto bajo" },
     controlsDetail: "Detalle de controles auditados",
     severity: "Severidad",
     status: "Estado",
@@ -78,6 +96,15 @@ const TRANSLATIONS: Record<Lang, {
     summary: "Executive summary",
     criticalActions: "Critical actions (7 days)",
     quickWins: "Quick wins (30 days)",
+    attackScenarios: "Possible Attack Scenarios",
+    attackScenarioSubtitle: "Concrete vectors an attacker could exploit given the detected gaps",
+    attackVector: "Attack vector",
+    attackPrereq: "Attacker prerequisites",
+    attackAssets: "Affected assets",
+    attackMitigation: "Recommended mitigation",
+    attackLinkedControls: "Exploited controls",
+    attackProbability: { alta: "High probability", media: "Medium probability", baja: "Low probability" },
+    attackImpact: { critico: "Critical impact", alto: "High impact", medio: "Medium impact", bajo: "Low impact" },
     controlsDetail: "Audited controls detail",
     severity: "Severity",
     status: "Status",
@@ -117,6 +144,15 @@ const TRANSLATIONS: Record<Lang, {
     summary: "Resumo executivo",
     criticalActions: "Ações críticas (7 dias)",
     quickWins: "Quick wins (30 dias)",
+    attackScenarios: "Cenários de Ataque Possíveis",
+    attackScenarioSubtitle: "Vetores concretos que um atacante poderia explorar dadas as brechas detectadas",
+    attackVector: "Vetor de ataque",
+    attackPrereq: "Pré-requisitos do atacante",
+    attackAssets: "Ativos afetados",
+    attackMitigation: "Mitigação recomendada",
+    attackLinkedControls: "Controles explorados",
+    attackProbability: { alta: "Probabilidade alta", media: "Probabilidade média", baixa: "Probabilidade baixa" },
+    attackImpact: { critico: "Impacto crítico", alto: "Impacto alto", medio: "Impacto médio", baixa: "Impacto baixo" },
     controlsDetail: "Detalhe dos controles auditados",
     severity: "Severidade",
     status: "Status",
@@ -360,6 +396,166 @@ export async function exportAuditPDF(result: AuditResult, lang: Lang = "es") {
         doc.text(line, margin + 10, y);
         y += 12;
       });
+      y += 4;
+    });
+    y += 8;
+  }
+
+  // Attack Scenarios
+  if (result.attackScenarios && result.attackScenarios.length > 0) {
+    ensureSpace(50);
+
+    // Section header
+    doc.setFillColor(254, 226, 226);
+    doc.rect(margin - 4, y - 12, contentWidth + 8, 24, "F");
+    doc.setTextColor(185, 28, 28);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`🎯  ${t.attackScenarios}`, margin, y + 4);
+    y += 16;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(120, 130, 145);
+    const scenarioSubLines = doc.splitTextToSize(t.attackScenarioSubtitle, contentWidth);
+    scenarioSubLines.forEach((line: string) => {
+      ensureSpace(11);
+      doc.text(line, margin, y);
+      y += 11;
+    });
+    y += 6;
+
+    result.attackScenarios.forEach((scenario, idx) => {
+      ensureSpace(80);
+
+      // Probability/Impact badges
+      const probColor: Record<string, [number, number, number]> = {
+        alta: [220, 38, 38],
+        media: [234, 88, 12],
+        baja: [37, 99, 235],
+      };
+      const impColor: Record<string, [number, number, number]> = {
+        critico: [185, 28, 28],
+        alto: [194, 65, 12],
+        medio: [180, 83, 9],
+        bajo: [29, 78, 216],
+      };
+      const pc = probColor[scenario.probability] || probColor.media;
+      const ic = impColor[scenario.impact] || impColor.alto;
+
+      // Scenario header band
+      doc.setFillColor(254, 246, 246);
+      doc.rect(margin, y - 9, contentWidth, 22, "F");
+
+      // Scenario ID + title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(120, 130, 145);
+      doc.text(scenario.id.toUpperCase(), margin + 6, y);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      const titleLines = doc.splitTextToSize(scenario.title, contentWidth - 180);
+      titleLines.forEach((line: string, li: number) => {
+        if (li > 0) ensureSpace(11);
+        doc.text(line, margin + 6, y + 11 + li * 11);
+      });
+
+      // Probability badge
+      doc.setFillColor(pc[0], pc[1], pc[2]);
+      doc.roundedRect(pageWidth - margin - 100, y - 4, 95, 12, 2, 2, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.text(t.attackProbability[scenario.probability] || scenario.probability, pageWidth - margin - 97, y + 4);
+
+      // Impact badge below
+      doc.setFillColor(ic[0], ic[1], ic[2]);
+      doc.roundedRect(pageWidth - margin - 100, y + 11, 95, 12, 2, 2, "F");
+      doc.text(t.attackImpact[scenario.impact] || scenario.impact, pageWidth - margin - 97, y + 19);
+
+      y += titleLines.length * 11 + 18;
+
+      // Vector
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(120, 130, 145);
+      doc.text(`${t.attackVector}:`, margin + 6, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60, 70, 85);
+      const vectorLines = doc.splitTextToSize(scenario.vector, contentWidth - 12);
+      vectorLines.forEach((line: string) => {
+        ensureSpace(11);
+        doc.text(line, margin + 6, y + 11);
+        y += 11;
+      });
+      y += 2;
+
+      // Prereqs
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(120, 130, 145);
+      doc.text(`${t.attackPrereq}:`, margin + 6, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60, 70, 85);
+      const prereqLines = doc.splitTextToSize(scenario.prerequisites, contentWidth - 12);
+      prereqLines.forEach((line: string) => {
+        ensureSpace(11);
+        doc.text(line, margin + 6, y + 11);
+        y += 11;
+      });
+      y += 2;
+
+      // Assets
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(120, 130, 145);
+      doc.text(`${t.attackAssets}:`, margin + 6, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60, 70, 85);
+      const assetsText = scenario.affectedAssets.join(" · ");
+      const assetLines = doc.splitTextToSize(assetsText, contentWidth - 12);
+      assetLines.forEach((line: string) => {
+        ensureSpace(11);
+        doc.text(line, margin + 6, y + 11);
+        y += 11;
+      });
+      y += 2;
+
+      // Mitigation
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(120, 130, 145);
+      doc.text(`${t.attackMitigation}:`, margin + 6, y);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(60, 70, 85);
+      const mitLines = doc.splitTextToSize(scenario.mitigation, contentWidth - 12);
+      mitLines.forEach((line: string) => {
+        ensureSpace(11);
+        doc.text(line, margin + 6, y + 11);
+        y += 11;
+      });
+
+      // Linked controls
+      if (scenario.linkedControls && scenario.linkedControls.length > 0) {
+        y += 4;
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(120, 130, 145);
+        doc.setFontSize(7.5);
+        doc.text(`${t.attackLinkedControls}:`, margin + 6, y);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(80, 90, 105);
+        const ctrlText = scenario.linkedControls.join(", ");
+        const ctrlLines = doc.splitTextToSize(ctrlText, contentWidth - 90);
+        ctrlLines.forEach((line: string, li: number) => {
+          if (li > 0) ensureSpace(10);
+          doc.text(line, margin + 90, y + li * 10);
+        });
+        y += ctrlLines.length * 10 + 6;
+      }
+
+      y += 6;
+      // Separator
+      doc.setDrawColor(254, 226, 226);
+      doc.line(margin, y - 3, margin + contentWidth, y - 3);
       y += 4;
     });
     y += 8;

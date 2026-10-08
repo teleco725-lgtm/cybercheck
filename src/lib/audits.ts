@@ -440,6 +440,35 @@ export const AUDITS: AuditRegionGroup[] = [
 
 export const ALL_AUDITS: AuditType[] = AUDITS.flatMap((g) => g.audits);
 
+// Escenarios de ataque posibles generados por IA basados en controles no cumplidos
+export type AttackProbability = "alta" | "media" | "baja";
+export type AttackImpact = "critico" | "alto" | "medio" | "bajo";
+
+export interface AttackScenario {
+  id: string;
+  title: string;                // "Exfiltración de datos vía prompt injection a chatbot"
+  vector: string;               // Cómo ejecuta el ataque el atacante
+  affectedAssets: string[];     // ["Base de datos de clientes", "Credenciales internas"]
+  prerequisites: string;       // Qué necesita el atacante (acceso inicial, conocimiento, etc.)
+  probability: AttackProbability;
+  impact: AttackImpact;
+  mitigation: string;           // Cómo mitigar este ataque específico
+  linkedControls: string[];    // IDs de controles relacionados (no cumplidos)
+}
+
+export const ATTACK_PROBABILITY_META: Record<AttackProbability, { label: string; color: string; bg: string; icon: string }> = {
+  alta: { label: "Alta", color: "text-red-700", bg: "bg-red-50", icon: "Flame" },
+  media: { label: "Media", color: "text-orange-700", bg: "bg-orange-50", icon: "AlertTriangle" },
+  baja: { label: "Baja", color: "text-blue-700", bg: "bg-blue-50", icon: "Info" },
+};
+
+export const ATTACK_IMPACT_META: Record<AttackImpact, { label: string; color: string; bg: string }> = {
+  critico: { label: "Crítico", color: "text-red-700", bg: "bg-red-100" },
+  alto: { label: "Alto", color: "text-orange-700", bg: "bg-orange-100" },
+  medio: { label: "Medio", color: "text-amber-700", bg: "bg-amber-100" },
+  bajo: { label: "Bajo", color: "text-blue-700", bg: "bg-blue-100" },
+};
+
 export const SEVERITY_META: Record<Severity, { label: string; color: string; bg: string; border: string; score: number }> = {
   critico: { label: "Crítico", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", score: 10 },
   alto: { label: "Alto", color: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200", score: 7 },
@@ -450,16 +479,16 @@ export const SEVERITY_META: Record<Severity, { label: string; color: string; bg:
 
 export const PALETTES = {
   azul: {
-    name: "Azul Aqua",
-    description: "Azul cielo con blanco — fresco, profesional, confianza",
-    primary: "oklch(0.55 0.18 230)",
-    primaryLight: "oklch(0.85 0.08 230)",
-    accent: "oklch(0.65 0.20 200)",
-    gradientFrom: "oklch(0.98 0.02 230)",
-    gradientVia: "oklch(0.95 0.04 220)",
-    gradientTo: "oklch(0.99 0.01 220)",
-    heroGradientFrom: "oklch(0.92 0.08 230)",
-    heroGradientTo: "oklch(0.99 0.01 230)",
+    name: "Daybreak Blue",
+    description: "Azul vibrante Daybreak Blue (#1677FF) — moderno, confianza, tecnología",
+    primary: "#1677ff",
+    primaryLight: "#4096ff",
+    accent: "#91caff",
+    gradientFrom: "oklch(0.99 0.012 257)",
+    gradientVia: "oklch(0.95 0.04 257)",
+    gradientTo: "oklch(0.99 0.01 257)",
+    heroGradientFrom: "oklch(0.91 0.10 257)",
+    heroGradientTo: "oklch(0.99 0.012 257)",
   },
   verde: {
     name: "Verde Esmeralda",
